@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-interface VoterWhitelister {
+interface OnChainWhitelistContract {
     function getFtsoWhitelistedPriceProviders() external view returns (address[] memory);
 }
 
@@ -14,15 +14,19 @@ contract ValidatorRegistry {
     mapping(address => NodeInfo[]) private nodeRegistry;
 
     address public voterWhitelisterAddress;
+    OnChainWhitelistContract public whitelistContract;
 
     event NodeRegistered(address indexed owner, string nodeID);
     event NodeModified(address indexed owner, string oldNodeID, string newNodeID);
     event NodeDeleted(address indexed owner, string nodeID);
 
-    
-    constructor(address _voterWhitelisterAddress) {
-        voterWhitelisterAddress = _voterWhitelisterAddress;
+        constructor(address _whitelistContractAddress) {
+        whitelistContract = OnChainWhitelistContract(_whitelistContractAddress);
     }
+
+ /*   constructor(address _voterWhitelisterAddress) {
+        voterWhitelisterAddress = _voterWhitelisterAddress;
+    }*/
 
 
     modifier isValidNodeID(string memory nodeID) {
@@ -103,7 +107,7 @@ contract ValidatorRegistry {
     }
 
     function isAddressWhitelisted(address _address) private view returns (bool) {
-        VoterWhitelister whitelister = VoterWhitelister(voterWhitelisterAddress);
+        OnChainWhitelistContract whitelister = OnChainWhitelistContract(voterWhitelisterAddress);
         address[] memory whitelistedProviders = whitelister.getFtsoWhitelistedPriceProviders();
 
         for (uint256 i = 0; i < whitelistedProviders.length; i++) {

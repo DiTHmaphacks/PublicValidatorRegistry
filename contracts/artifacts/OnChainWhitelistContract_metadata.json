@@ -1,0 +1,187 @@
+{
+	"compiler": {
+		"version": "0.8.21+commit.d9974bed"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "previousOwner",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "newOwner",
+						"type": "address"
+					}
+				],
+				"name": "OwnershipTransferred",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address[]",
+						"name": "toAddAddresses",
+						"type": "address[]"
+					}
+				],
+				"name": "addToWhitelist",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "getFtsoWhitelistedPriceProviders",
+				"outputs": [
+					{
+						"internalType": "address[]",
+						"name": "",
+						"type": "address[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "isOwner",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "owner",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address[]",
+						"name": "toRemoveAddresses",
+						"type": "address[]"
+					}
+				],
+				"name": "removeFromWhitelist",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "renounceOwnership",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "newOwner",
+						"type": "address"
+					}
+				],
+				"name": "transferOwnership",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "whitelist",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {
+				"addToWhitelist(address[])": {
+					"notice": "Add to whitelist"
+				},
+				"getFtsoWhitelistedPriceProviders()": {
+					"notice": "Function with whitelist"
+				},
+				"removeFromWhitelist(address[])": {
+					"notice": "Remove from whitelist"
+				}
+			},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/OnChainWhitelistContract.sol": "OnChainWhitelistContract"
+		},
+		"evmVersion": "shanghai",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/OnChainWhitelistContract.sol": {
+			"keccak256": "0xa34777d8451edb3c07f8fea6b8225891d3f28d1604b6c241bc8f423eb8507fe3",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://9280838bfb1c3aeedfc1356546d8e608f819a7b78effbcbffebee7ea564c7824",
+				"dweb:/ipfs/QmXL423DYnSTgkpwtLRUJ2kMvE9p1WeQtKati2zcPXShHc"
+			]
+		},
+		"contracts/Ownable.sol": {
+			"keccak256": "0xa6c82ea573802107b89f4d3adf2c769d94ec09991f70d01777fca68919ee3b3a",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://2576a2dd716fb9aa99a8c95fec0be1bc63aec8355dbe79f0d387a2b600efa9a9",
+				"dweb:/ipfs/QmVouQ4NEWNqPnqKrAcP4HqRBhQ5qMPCQWQNzTW9W6KH44"
+			]
+		}
+	},
+	"version": 1
+}
