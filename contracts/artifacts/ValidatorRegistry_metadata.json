@@ -1,0 +1,195 @@
+{
+	"compiler": {
+		"version": "0.8.18+commit.87f61d96"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_voterWhitelisterAddress",
+						"type": "address"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "constructor"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "owner",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "nodeID",
+						"type": "string"
+					}
+				],
+				"name": "NodeDeleted",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "owner",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "oldNodeID",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "newNodeID",
+						"type": "string"
+					}
+				],
+				"name": "NodeModified",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "owner",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "nodeID",
+						"type": "string"
+					}
+				],
+				"name": "NodeRegistered",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "nodeID",
+						"type": "string"
+					}
+				],
+				"name": "deleteNode",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "getAllAddresses",
+				"outputs": [
+					{
+						"internalType": "address[]",
+						"name": "allOwners",
+						"type": "address[]"
+					},
+					{
+						"internalType": "string[]",
+						"name": "nodeIDs",
+						"type": "string[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "oldNodeID",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "newNodeID",
+						"type": "string"
+					}
+				],
+				"name": "modifyNode",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "nodeID",
+						"type": "string"
+					}
+				],
+				"name": "registerNode",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "voterWhitelisterAddress",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/ValidatorRegistry.sol": "ValidatorRegistry"
+		},
+		"evmVersion": "paris",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/ValidatorRegistry.sol": {
+			"keccak256": "0x04c2a8257abf29ba7f8ce5c66aba2d5fa6c888ca0ef12c41af844f47b7f0043a",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://f51be90e12b5422a19389986b02ae616613e73c2ce6163fa6e3329398aa6e5f8",
+				"dweb:/ipfs/QmbwD8TXsqSwPCKCSKQzDyKNVd775uJuZf5gRn7ihxs63E"
+			]
+		}
+	},
+	"version": 1
+}

@@ -1,0 +1,59 @@
+{
+	"compiler": {
+		"version": "0.8.18+commit.87f61d96"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [],
+				"name": "getFtsoWhitelistedPriceProviders",
+				"outputs": [
+					{
+						"internalType": "address[]",
+						"name": "",
+						"type": "address[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/ValidatorRegistry.sol": "VoterWhitelister"
+		},
+		"evmVersion": "paris",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/ValidatorRegistry.sol": {
+			"keccak256": "0x04c2a8257abf29ba7f8ce5c66aba2d5fa6c888ca0ef12c41af844f47b7f0043a",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://f51be90e12b5422a19389986b02ae616613e73c2ce6163fa6e3329398aa6e5f8",
+				"dweb:/ipfs/QmbwD8TXsqSwPCKCSKQzDyKNVd775uJuZf5gRn7ihxs63E"
+			]
+		}
+	},
+	"version": 1
+}

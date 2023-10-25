@@ -1,0 +1,72 @@
+{
+	"compiler": {
+		"version": "0.8.18+commit.87f61d96"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "provider",
+						"type": "address"
+					}
+				],
+				"name": "addWhitelistedProvider",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "getFtsoWhitelistedPriceProviders",
+				"outputs": [
+					{
+						"internalType": "address[]",
+						"name": "",
+						"type": "address[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/MockVoterWhitelister.sol": "MockVoterWhitelister"
+		},
+		"evmVersion": "paris",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/MockVoterWhitelister.sol": {
+			"keccak256": "0xd311b2513e653900aecc93260e8829821ef647395c14b330a0471e572e60b636",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://ee3f1ae939d69e1c89ad5380c5f0e52434fe1971bd36edeb93f1d381a330be3d",
+				"dweb:/ipfs/Qmc8SFwCSh3zDvac8tDT65ZB3sRukbnz4oqcQqghqk5WLE"
+			]
+		}
+	},
+	"version": 1
+}
