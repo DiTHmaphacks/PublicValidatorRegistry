@@ -6,7 +6,6 @@ pragma solidity ^0.8.0;
 
 contract ValidatorRegistry {
 
-    //to be reviewed
     //atlas proposed base fixes and refactor
     //TODO: hook up to ftsowhitelist
     mapping(address => uint) public nodeNumber;
@@ -22,9 +21,15 @@ contract ValidatorRegistry {
 
    
     modifier isValidNodeID(string memory nodeID) {
-        //TODO: bytes20
-        require(bytes(nodeID).length >= 32 && bytes(nodeID).length <= 33, "Invalid Node ID length");
 
+        nodeID = string(bytes.concat(bytes("NodeID-"),bytes(nodeID)));
+
+        bytes20 idBytes = stringToBytes20(nodeID);
+
+        require(bytes(nodeID).length == 40, "Invalid Node ID length");
+        
+        require(idBytes != 0, "Invalid Node ID");
+        
         _;
 
     }
@@ -37,6 +42,22 @@ contract ValidatorRegistry {
 
         _;
 
+    }
+
+    function stringToBytes20(string memory source) internal pure returns (bytes20 result) {
+        
+        bytes memory tempEmptyStringTest = bytes(source);
+        
+        if (tempEmptyStringTest.length == 0) {
+            
+            return 0x0;
+        }
+        
+        assembly {
+            
+            result := mload(add(source, 32))
+
+        }
     }
 
 
