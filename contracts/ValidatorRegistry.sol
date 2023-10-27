@@ -169,7 +169,7 @@ contract ValidatorRegistry {
     }
 
     //Change owner
-    function transferOwnership(address payable _newOwner) external onlyOwner {
+    function transferOwnership(address _newOwner) external onlyOwner {
         owner = _newOwner;
     }
 
