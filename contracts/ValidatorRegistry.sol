@@ -2,27 +2,27 @@
 
 pragma solidity ^0.8.0;
 
-interface WhitelistVoter {
-    function getFtsoWhitelistedPriceProviders(uint256 _ftsoIndex) external view returns (address[] memory);
-}
+import "./IVoterWhitelister.sol";
 
-contract ValidatorRegistry is WhitelistVoter {
+contract ValidatorRegistry {
 
     address public owner;
-    address public whitelistVoterAddress;
-    WhitelistVoter public whitelistVoter;
 
-    constructor(address _whitelistVoterAddress) {
-        whitelistVoterAddress = _whitelistVoterAddress;
-        whitelistVoter = WhitelistVoter(_whitelistVoterAddress);
-        owner = msg.sender;
-    }
-    
+    //Contracts
+    IVoterWhitelister private voterWhitelisterContract;
+
     //Errors
     string private constant ERR_ONLY_OWNER = "Only Owner can call this function";
     
+    constructor(address _whitelistVoterAddress) {
+        voterWhitelisterContract = IVoterWhitelister(_whitelistVoterAddress);
+        owner = msg.sender;
+    }
+
+
     //TODO: hook up to ftsowhitelist
-    mapping(address => uint) public nodeCount;
+    mapping(address => uint) private nodeCount;
+    mapping(address => bool) private whitelistedProviders;
 
     Node[] private nodes;
 
@@ -33,8 +33,8 @@ contract ValidatorRegistry is WhitelistVoter {
         string nodeID;
     }
 
+    //Events
     event NodeRegistered(address indexed owner, string nodeID);
-
     event NodeDeleted(address indexed owner, string nodeID);
 
     //Modifiers
@@ -42,7 +42,7 @@ contract ValidatorRegistry is WhitelistVoter {
         require(msg.sender == owner, ERR_ONLY_OWNER);
         _;
     }
-   
+
     modifier isValidNodeID(string memory nodeID) {
 
         //CoNH4gyEwB9gTrEmozwh14Zr8hs6wokRS
@@ -61,7 +61,6 @@ contract ValidatorRegistry is WhitelistVoter {
 
     }
 
-
     modifier hasLessThanFiveNodes() {
 
         require(nodeCount[msg.sender] < 5, "Owner already has 5 registered nodes");
@@ -69,32 +68,6 @@ contract ValidatorRegistry is WhitelistVoter {
         _;
 
     }
-
-    function getFtsoWhitelistedPriceProviders(uint256 _ftsoIndex) external view returns (address[] memory) {
-
-        address[] memory whitelistedProviders = WhitelistVoter(whitelistVoterAddress).getFtsoWhitelistedPriceProviders(_ftsoIndex);
-        
-        // check if msg.sender is in the whitelisted providers array
-        bool senderIsWhitelisted = false;
-
-        for (uint256 i = 0; i < whitelistedProviders.length; i++) {
-            
-            if (whitelistedProviders[i] == msg.sender) {
-                
-                senderIsWhitelisted = true;
-                
-                break;
-            
-            }
-        
-        }
-
-        require(senderIsWhitelisted, "Sender is not whitelisted for the specified FTSO index");
-
-        return whitelistedProviders;
-
-    }
-
 
     function stringToBytes20(string memory source) internal pure returns (bytes20 result) {
         
@@ -132,41 +105,29 @@ contract ValidatorRegistry is WhitelistVoter {
 
     }
 
+    //Store whitelisted providers on mapping
+    function getWhitelistedAddresses(uint _ftsoIndex) internal {
+        address[] memory _whitelistedProviders = voterWhitelisterContract.getFtsoWhitelistedPriceProviders(_ftsoIndex);
+        
+        for (uint256 i = 0; i < _whitelistedProviders.length; i++) {
+            whitelistedProviders[_whitelistedProviders[i]] = true;
+        }
+    }
 
     function registerNode(string memory nodeID) external isValidNodeID(nodeID) hasLessThanFiveNodes {
-         
-        address[] memory whitelistedProviders = whitelistVoter.getFtsoWhitelistedPriceProviders(1);
-
-        // check if msg.sender is in the whitelisted providers array for sample ftsoindex of 1.. will want to update to btc 
-        bool senderIsWhitelisted = false;
-        
-        for (uint256 i = 0; i < whitelistedProviders.length; i++) {
-            
-            if (whitelistedProviders[i] == msg.sender) {
-            
-                senderIsWhitelisted = true;
-            
-                break;
-            
-            }
-        
-        }
+         getWhitelistedAddresses(1);
 
         // ensure msg.sender is whitelisted for the specified FTSO index
-        require(senderIsWhitelisted, "Sender is not whitelisted for the specified FTSO index");
+        require(whitelistedProviders[msg.sender], "Sender is not whitelisted for the specified FTSO index");
 
         // checks passed, register node
         Node memory newNode = Node(msg.sender, nodeID);
-        
         nodes.push(newNode);
-        
         nodeCount[msg.sender]++;
         
         emit NodeRegistered(msg.sender, nodeID);
         
     }
-
-
 
     function deleteNode(string memory nodeID) external { //skip nodeid validation due to unique check, only check if msg.sender is owner
         
@@ -208,7 +169,7 @@ contract ValidatorRegistry is WhitelistVoter {
     }
 
     //Change owner
-    function transferOwnership(address _newOwner) external onlyOwner {
+    function transferOwnership(address payable _newOwner) external onlyOwner {
         owner = _newOwner;
     }
 
