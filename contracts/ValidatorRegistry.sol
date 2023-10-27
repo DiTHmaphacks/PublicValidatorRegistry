@@ -8,23 +8,23 @@ interface WhitelistVoter {
 
 contract ValidatorRegistry is WhitelistVoter {
 
+    address public owner;
     address public whitelistVoterAddress;
     WhitelistVoter public whitelistVoter;
 
     constructor(address _whitelistVoterAddress) {
         whitelistVoterAddress = _whitelistVoterAddress;
         whitelistVoter = WhitelistVoter(_whitelistVoterAddress);
+        owner = msg.sender;
     }
-
-    //atlas proposed base fixes and refactor
+    
+    //Errors
+    string private constant ERR_ONLY_OWNER = "Only Owner can call this function";
+    
     //TODO: hook up to ftsowhitelist
     mapping(address => uint) public nodeCount;
 
     Node[] private nodes;
-
-    //mapping(address => mapping(uint => string)) public nodeRegistry;
-
-    //mapping(address => string[]) public ownerNodeIDs;
 
     struct Node {
         
@@ -37,7 +37,11 @@ contract ValidatorRegistry is WhitelistVoter {
 
     event NodeDeleted(address indexed owner, string nodeID);
 
-
+    //Modifiers
+    modifier onlyOwner() {
+        require(msg.sender == owner, ERR_ONLY_OWNER);
+        _;
+    }
    
     modifier isValidNodeID(string memory nodeID) {
 
@@ -203,6 +207,9 @@ contract ValidatorRegistry is WhitelistVoter {
 
     }
 
-    
+    //Change owner
+    function transferOwnership(address _newOwner) external onlyOwner {
+        owner = _newOwner;
+    }
 
 }
