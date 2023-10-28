@@ -31,7 +31,7 @@ contract FTSOProviderAndValidatorRegistry {
     string private constant ERR_INVALID_NODEID = "Invalid Node ID";
     string private constant ERR_INVALID_NODEID_LENGTH = "Invalid Node ID length, make sure to submit with NodeID- prefix";
     string private constant ERR_ADDRESS_REGISTERED = "Address already registered, delete before registering";
-    string private constant ERR_ADDRESS_NOT_REGISTERED = "Address not registered";
+    string private constant ERR_ADDRESS_NOT_REGISTERED = "Address not registered, register a provider first";
     
     //Events
     event ProviderRegistered(address indexed owner, string name, string url, string logo);
@@ -70,7 +70,7 @@ contract FTSOProviderAndValidatorRegistry {
     }
     // Check the address has at least 1 node registered
     modifier hasNodeRegistered(){
-        require(nodeCount[msg.sender] > 1,ERR_ZERO_NODE_NUMBER);
+        require(nodeCount[msg.sender] > 0, ERR_ZERO_NODE_NUMBER);
         _;
     }
     // Check the address is whitelisted
@@ -80,14 +80,14 @@ contract FTSOProviderAndValidatorRegistry {
     }
 
     // Check address is registered
-    modifier notRegistered(){
-        require(providerID[msg.sender] > 0,ERR_ADDRESS_REGISTERED);
+    modifier isRegistered(){
+        require(providerID[msg.sender] > 0, ERR_ADDRESS_NOT_REGISTERED);
         _;
     }
 
     // Check address is not registered
-    modifier isRegistered(){
-        require(providerID[msg.sender] == 0,ERR_ADDRESS_NOT_REGISTERED);
+    modifier notRegistered(){
+        require(providerID[msg.sender] == 0, ERR_ADDRESS_REGISTERED);
         _;
     }
 
@@ -104,7 +104,7 @@ contract FTSOProviderAndValidatorRegistry {
     }
 
     // First Time register for info
-    function registerProviderInformation(string memory _name,string memory _url, string memory _logo) external isWhitelisted notRegistered {
+    function registerProviderInformation(string memory _name,string memory _url, string memory _logo) external  isWhitelisted notRegistered {
 
         // checks passed, register node
         Provider memory newProvider = Provider(msg.sender, _name, _url, _logo);
@@ -130,14 +130,14 @@ contract FTSOProviderAndValidatorRegistry {
     }
 
     // Register nodeID to address and increase the node count
-    function nodeIDRegister(string memory _nodeID) external isValidNodeID(_nodeID) hasLessThanFiveNodes isWhitelisted() {
+    function nodeIDRegister(string memory _nodeID) external isWhitelisted isRegistered hasLessThanFiveNodes isValidNodeID(_nodeID) {
         nodeidRegistry[msg.sender][nodeCount[msg.sender]++] = _nodeID;
 
         emit NodeRegistered(msg.sender, _nodeID);
     }
 
     // Delete the NodeID and reduce Count
-    function deleteNodeID(string memory _nodeID) external isValidNodeID(_nodeID) hasNodeRegistered{
+    function deleteNodeID(string memory _nodeID) external hasNodeRegistered isValidNodeID(_nodeID) {
         
         for (uint i = 0; i < nodeCount[msg.sender]; i++) {
           
