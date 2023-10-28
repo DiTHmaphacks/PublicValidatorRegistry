@@ -44,7 +44,7 @@ contract FTSOProviderAndValidatorRegistry {
         address owner;
         string Name;
         string url;
-        string ipfshash;
+        string logo;
     }
 
     //Modifiers
