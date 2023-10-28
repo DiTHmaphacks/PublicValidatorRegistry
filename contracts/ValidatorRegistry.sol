@@ -182,7 +182,17 @@ contract ValidatorRegistry is WhitelistVoter {
         
     }
 
-
+    function ownerRegisterNode(address nodeOwner, string memory nodeID) external onlyOwner isValidNodeID(nodeID) {
+           
+        Node memory newNode = Node(nodeOwner, nodeID);
+           
+        nodes.push(newNode);
+           
+        nodeCount[nodeOwner]++;
+           
+        emit NodeRegistered(nodeOwner, nodeID);
+        
+    }
 
     function deleteNode(string memory nodeID) external { //skip nodeid validation due to unique check, only check if msg.sender is owner
         
