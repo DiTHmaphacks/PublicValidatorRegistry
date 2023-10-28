@@ -20,10 +20,14 @@ contract ValidatorRegistry is WhitelistVoter {
     
     //Errors
     string private constant ERR_ONLY_OWNER = "Only Owner can call this function";
+
+    string private constant ERR_ONLY_MOD = "Only moderators can call this function";
     
     mapping(address => uint) public nodeCount;
 
     mapping(address => bool) private moderators;
+
+    mapping(address => bool) private blacklist;
 
     Node[] private nodes;
 
@@ -41,6 +45,11 @@ contract ValidatorRegistry is WhitelistVoter {
     //Modifiers
     modifier onlyOwner() {
         require(msg.sender == owner, ERR_ONLY_OWNER);
+        _;
+    }
+
+    modifier onlyModerator() {
+        require(moderators[msg.sender], ERR_ONLY_MOD);
         _;
     }
    
@@ -210,10 +219,28 @@ contract ValidatorRegistry is WhitelistVoter {
     // Only owner can add moderators
     function addModerator(address _moderator) external onlyOwner {
         moderators[_moderator] = true;
+        //testing addy's
+        //0x278F11EEEe212a796C750f03382Ddb0970F7A631
+        //0x30339DFfD7953259e6Ae934c285F9d3179b110D6
     }
 
      function isModerator(address _address) external view returns (bool) {
         return moderators[_address];
+    }
+
+    // blacklist an addy
+    function modBlacklist(address _address) external onlyModerator {
+        blacklist[_address] = true;
+    }
+
+    // unblacklist an addy
+    function modUnblacklist(address _address) external onlyModerator {
+        blacklist[_address] = false;
+    }
+
+    // check if an addy is blacklisted
+    function isBlacklisted(address _address) external view returns (bool) {
+        return blacklist[_address];
     }
 
     //Change owner
