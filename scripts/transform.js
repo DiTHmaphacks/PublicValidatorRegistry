@@ -1,3 +1,5 @@
+const fs = require('fs');
+
 const data = {
   address: "0xC522E6A633545872f1afc0cdD7b2D96d97E3dE67",
   name: "Ftso_xyz",
@@ -7,24 +9,24 @@ const data = {
 };
 
 //example, may not be real
-const solidifi = ["name", "address", "nodeID", "url", "logo_uri"];
+//const solidifi = ["name", "address", "nodeID", "url", "logo_uri"];
 
 //example, may not be real
-const flareMetrics = ["company", "address", "nodeId", "url", "logo"];
+const Mapping = JSON.parse(fs.readFileSync("./examples/flaremetrics.json"));
+const matchingKeys = Object.keys(Mapping);
+
 
 //dapp defined
 //const custom = ["custom_address", "outoforder_name", "whateverurl", "samplepicture", "nodes"];
 
-const formatType =  "flareMetrics";
-//const formatType =  "solidifi";
+let formatType = "flareMetrics";
+
 
 function transformData(data, formatType) {
   let formatArray;
 
-  if (formatType === "solidifi") {
-    formatArray = solidifi;
-  } else if (formatType === "flareMetrics") {
-    formatArray = flareMetrics;
+  if (formatType === "flareMetrics") {
+    formatArray = matchingKeys;
   } else {
     formatArray = [];
   }
@@ -32,46 +34,35 @@ function transformData(data, formatType) {
   let transformedData = {};
 
   formatArray.forEach((key) => {
-    let transformedKey = key;
+    const mappedKey = Mapping[key] || key;
 
     // Dynamically find keys in the data object
     const matchingKeys = Object.keys(data).filter(
-      (dataKey) => dataKey.toLowerCase() === key.toLowerCase()
+      (dataKey) => dataKey.toLowerCase() === mappedKey.toLowerCase()
     );
 
     if (matchingKeys.length > 0) {
-      transformedKey = matchingKeys[0];
+      transformedData[key] = customMappingFunction(mappedKey, data[matchingKeys[0]]);
     }
-
-    transformedData[key] = customMappingFunction(
-      transformedKey,
-      data[transformedKey]
-    );
   });
 
   return transformedData;
 }
 
 function customMappingFunction(key, input) {
-  //todo: instead of hardcoding, create mapping file
-  //todo: handle out of order sort mapping
-  if (formatType === "flareMetrics" && key.toLowerCase() === "company") {
-    return data["name"];
-  } else {
-    let transformedData = [];
+  let transformedData = [];
 
-    if (input !== undefined) {
-      if (Array.isArray(input)) {
-        input.forEach((node) => {
-          transformedData.push(node);
-        });
-      } else {
-        transformedData.push(input);
-      }
+  if (input !== undefined) {
+    if (Array.isArray(input)) {
+      input.forEach((node) => {
+        transformedData.push(node);
+      });
+    } else {
+      transformedData.push(input);
     }
-
-    return transformedData;
   }
+
+  return transformedData;
 }
 
 const transformedData = transformData(data, formatType);
