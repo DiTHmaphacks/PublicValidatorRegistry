@@ -16,6 +16,7 @@ contract ValidatorRegistry is WhitelistVoter {
         whitelistVoterAddress = _whitelistVoterAddress;
         whitelistVoter = WhitelistVoter(_whitelistVoterAddress);
         owner = msg.sender;
+        totalModerators = 0;
     }
     
     //Errors
@@ -28,6 +29,12 @@ contract ValidatorRegistry is WhitelistVoter {
     mapping(address => bool) private moderators;
 
     mapping(address => bool) private blacklist;
+
+    mapping(address => mapping(address => bool)) private votes;
+
+    mapping(address => uint256) private totalVotes;
+
+    uint256 private totalModerators;
 
     Node[] private nodes;
 
@@ -217,25 +224,50 @@ contract ValidatorRegistry is WhitelistVoter {
     }
 
     // Only owner can add moderators
-    function addModerator(address _moderator) external onlyOwner {
+     function addModerator(address _moderator) external onlyOwner {
+        require(!moderators[_moderator], "Address is already a moderator");
         moderators[_moderator] = true;
+        totalModerators++;
+
         //testing addy's
         //0x278F11EEEe212a796C750f03382Ddb0970F7A631
         //0x30339DFfD7953259e6Ae934c285F9d3179b110D6
+    }
+
+    function removeModerator(address _moderator) external onlyOwner {
+        require(moderators[_moderator], "Address is not a moderator");
+        moderators[_moderator] = false;
+        totalModerators--;
     }
 
      function isModerator(address _address) external view returns (bool) {
         return moderators[_address];
     }
 
-    // blacklist an addy
-    function modBlacklist(address _address) external onlyModerator {
-        blacklist[_address] = true;
+    // blacklist an addy (requires majority vote from mods)
+     function modBlacklist(address _address) external onlyModerator {
+        require(!votes[_address][msg.sender], "You have already voted on this proposal");
+
+        votes[_address][msg.sender] = true;
+        totalVotes[_address]++;
+
+        // majority, blacklist the address
+        if (totalVotes[_address] > totalModerators / 2) {
+            blacklist[_address] = true;
+        }
     }
 
-    // unblacklist an addy
+    // unblacklist an addy, with majority
     function modUnblacklist(address _address) external onlyModerator {
-        blacklist[_address] = false;
+        require(!votes[_address][msg.sender], "You have already voted on this proposal");
+
+        votes[_address][msg.sender] = true;
+        totalVotes[_address]++;
+
+        // majority, unblacklist the address
+        if (totalVotes[_address] > totalModerators / 2) {
+            blacklist[_address] = false;
+        }
     }
 
     // check if an addy is blacklisted
