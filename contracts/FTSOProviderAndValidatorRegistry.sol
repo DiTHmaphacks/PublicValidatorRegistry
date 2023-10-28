@@ -104,7 +104,7 @@ contract FTSOProviderAndValidatorRegistry {
     }
 
     // First Time register for info
-    function registerProviderInformation(string memory _name,string memory _url, string memory _logo) external  isWhitelisted notRegistered {
+    function registerProviderInformation(string calldata _name,string calldata _url, string calldata _logo) external  isWhitelisted notRegistered {
 
         // checks passed, register node
         Provider memory newProvider = Provider(msg.sender, _name, _url, _logo);
@@ -130,14 +130,14 @@ contract FTSOProviderAndValidatorRegistry {
     }
 
     // Register nodeID to address and increase the node count
-    function nodeIDRegister(string memory _nodeID) external isWhitelisted isRegistered hasLessThanFiveNodes isValidNodeID(_nodeID) {
+    function nodeIDRegister(string calldata _nodeID) external isWhitelisted isRegistered hasLessThanFiveNodes isValidNodeID(_nodeID) {
         nodeidRegistry[msg.sender][nodeCount[msg.sender]++] = _nodeID;
 
         emit NodeRegistered(msg.sender, _nodeID);
     }
 
     // Delete the NodeID and reduce Count
-    function deleteNodeID(string memory _nodeID) external hasNodeRegistered isValidNodeID(_nodeID) {
+    function deleteNodeID(string calldata _nodeID) external hasNodeRegistered isValidNodeID(_nodeID) {
         
         for (uint i = 0; i < nodeCount[msg.sender]; i++) {
           
