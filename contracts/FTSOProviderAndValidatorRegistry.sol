@@ -25,10 +25,11 @@ contract FTSOProviderAndValidatorRegistry {
 
     //Errors
     string private constant ERR_ONLY_OWNER = "Only Owner can call this function";
-    string private constant ERR_NODE_NUMBER = "Provider already has 5 registered nodes, delete a nodeID";
+    string private constant ERR_FIVE_NODE_NUMBER = "Provider already has 5 registered nodes, delete a nodeID";
+    string private constant ERR_ZERO_NODE_NUMBER = "Provider doesnt have a node registered";
     string private constant ERR_NOT_WHITELISTED = "Address not Whitelisted";
     string private constant ERR_INVALID_NODEID = "Invalid Node ID";
-    string private constant ERR_INVALID_NODEID_LENGTH = "Invalid Node ID length";
+    string private constant ERR_INVALID_NODEID_LENGTH = "Invalid Node ID length, make sure to submit with NodeID- prefix";
     string private constant ERR_ADDRESS_REGISTERED = "Address already registered, delete before registering";
     string private constant ERR_ADDRESS_NOT_REGISTERED = "Address not registered";
     
@@ -55,23 +56,23 @@ contract FTSOProviderAndValidatorRegistry {
     }
 
     // Check the nodeID is valid
-    modifier isValidNodeID(string memory nodeID) {
-
-        //CoNH4gyEwB9gTrEmozwh14Zr8hs6wokRS
-        nodeID = string(bytes.concat(bytes("NodeID-"),bytes(nodeID)));
-        bytes20 idBytes = stringToBytes20(nodeID);
-        require(bytes(nodeID).length == 40, ERR_INVALID_NODEID_LENGTH);
+    modifier isValidNodeID(string memory _nodeID) {
+        require(bytes(_nodeID).length == 40, ERR_INVALID_NODEID_LENGTH);
+        bytes20 idBytes = stringToBytes20(_nodeID);
         require(idBytes != 0, ERR_INVALID_NODEID);
         _;
     }
 
     // Check the address has less than 5 nodes registered
     modifier hasLessThanFiveNodes() {
-
-        require(nodeCount[msg.sender] < 5, ERR_NODE_NUMBER);
+        require(nodeCount[msg.sender] < 5, ERR_FIVE_NODE_NUMBER);
         _;
     }
-
+    // Check the address has at least 1 node registered
+    modifier hasNodeRegistered(){
+        require(nodeCount[msg.sender] > 1,ERR_ZERO_NODE_NUMBER);
+        _;
+    }
     // Check the address is whitelisted
     modifier isWhitelisted(){
         require(priceSubmitterContract.voterWhitelistBitmap(msg.sender) > 0, ERR_NOT_WHITELISTED);
@@ -91,22 +92,15 @@ contract FTSOProviderAndValidatorRegistry {
     }
 
     function stringToBytes20(string memory source) internal pure returns (bytes20 result) {
-        
         //lightftso avax reference: https://docs.avax.network/reference/standards/cryptographic-primitives#tls-addresses
-
         bytes memory tempEmptyStringTest = bytes(source); 
-        
         if (tempEmptyStringTest.length == 0) {
-            
             return 0x0;
         }
         
         assembly {
-            
             result := mload(add(source, 32))
-
         }
-
     }
 
     // First Time register for info
@@ -143,15 +137,15 @@ contract FTSOProviderAndValidatorRegistry {
     }
 
     // Delete the NodeID and reduce Count
-    function deleteNodeID(string memory nodeID) external {
+    function deleteNodeID(string memory _nodeID) external isValidNodeID(_nodeID) hasNodeRegistered{
         
         for (uint i = 0; i < nodeCount[msg.sender]; i++) {
           
-            if (keccak256(bytes(nodeidRegistry[msg.sender][i])) == keccak256(bytes(nodeID))) {
+            if (keccak256(bytes(nodeidRegistry[msg.sender][i])) == keccak256(bytes(_nodeID))) {
                 delete nodeidRegistry[msg.sender][i];
                 nodeCount[msg.sender]--;
 
-                emit NodeDeleted(msg.sender, nodeID);
+                emit NodeDeleted(msg.sender, _nodeID);
                 return;
             }
         }
