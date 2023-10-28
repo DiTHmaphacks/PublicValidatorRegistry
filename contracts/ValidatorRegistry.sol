@@ -204,6 +204,20 @@ contract ValidatorRegistry is WhitelistVoter {
         revert("Node not found for the owner");
     }
 
+    /*
+    // wip -- depends on final structure
+    function modRemoveNode(string memory _nodeID) external onlyModerator {
+        require(!votes[stringToBytes20(_nodeID)][msg.sender], "You have already voted on this proposal");
+
+        votes[stringToBytes20(_nodeID)][msg.sender] = true;
+        totalVotes[stringToBytes20(_nodeID)]++;
+
+        // need to store vote counter, depends on approach / long term vision
+        if (totalVotes[stringToBytes20(_nodeID)] > totalModerators / 2) {
+            deleteNode(_nodeID);
+        }
+    } */
+
 
     function getAllOwnersAndNodes() external view returns (address[] memory owners, string[] memory nodeIDs) {
         
