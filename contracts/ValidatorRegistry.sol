@@ -21,8 +21,9 @@ contract ValidatorRegistry is WhitelistVoter {
     //Errors
     string private constant ERR_ONLY_OWNER = "Only Owner can call this function";
     
-    //TODO: hook up to ftsowhitelist
     mapping(address => uint) public nodeCount;
+
+    mapping(address => bool) private moderators;
 
     Node[] private nodes;
 
@@ -204,6 +205,15 @@ contract ValidatorRegistry is WhitelistVoter {
 
         return (owners, nodeIDs);
 
+    }
+
+    // Only owner can add moderators
+    function addModerator(address _moderator) external onlyOwner {
+        moderators[_moderator] = true;
+    }
+
+     function isModerator(address _address) external view returns (bool) {
+        return moderators[_address];
     }
 
     //Change owner
