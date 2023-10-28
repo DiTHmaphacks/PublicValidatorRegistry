@@ -2,71 +2,90 @@
 
 pragma solidity ^0.8.0;
 
-import "./IVoterWhitelister.sol";
+import "./IPriceSubmitter.sol";
 
-contract ValidatorRegistry {
+contract FTSOProviderAndValidatorRegistry {
 
     address public owner;
 
     //Contracts
-    IVoterWhitelister private voterWhitelisterContract;
+    IPriceSubmitter private priceSubmitterContract;
 
     //Errors
     string private constant ERR_ONLY_OWNER = "Only Owner can call this function";
+    string private constant ERR_NODE_NUMBER = "Provider already has 5 registered nodes, delete a nodeID";
+    string private constant ERR_NOT_WHITELISTED = "Address not Whitelisted";
+    string private constant ERR_INVALID_NODEID = "Invalid Node ID";
+    string private constant ERR_INVALID_NODEID_LENGTH = "Invalid Node ID length";
+    string private constant ERR_ADDRESS_REGISTERED = "Address already registered, delete before registering";
+    string private constant ERR_ADDRESS_NOT_REGISTERED = "Address not registered";
     
-    constructor(address _whitelistVoterAddress) {
-        voterWhitelisterContract = IVoterWhitelister(_whitelistVoterAddress);
+    constructor(address _priceSubmitterAddress) {
+        priceSubmitterContract = IPriceSubmitter(_priceSubmitterAddress);
         owner = msg.sender;
     }
 
-
     //TODO: hook up to ftsowhitelist
-    mapping(address => uint) private nodeCount;
-    mapping(address => bool) private whitelistedProviders;
+    mapping(address => uint) public nodeCount;
+    mapping(address => mapping(uint => string)) public nodeidRegistry;
+    mapping(address => uint) public providerID;
 
-    Node[] private nodes;
+    Provider[] private providers;
 
-    struct Node {
-        
+    struct Provider {
         address owner;
-        
-        string nodeID;
+        string Name;
+        string url;
+        string ipfshash;
     }
 
     //Events
+    event ProviderRegistered(address indexed owner, string name, string url, string logo);
+    event ProviderDeleted(address indexed owner);
     event NodeRegistered(address indexed owner, string nodeID);
     event NodeDeleted(address indexed owner, string nodeID);
 
     //Modifiers
+    // Check that only owner can call
     modifier onlyOwner() {
         require(msg.sender == owner, ERR_ONLY_OWNER);
         _;
     }
 
+    // Check the nodeID is valid
     modifier isValidNodeID(string memory nodeID) {
 
         //CoNH4gyEwB9gTrEmozwh14Zr8hs6wokRS
-
-        require(!isNodeIDUsed(nodeID), "Node ID already registered"); // verify if nodeid is already used
-
         nodeID = string(bytes.concat(bytes("NodeID-"),bytes(nodeID)));
-
         bytes20 idBytes = stringToBytes20(nodeID);
-
-        require(bytes(nodeID).length == 40, "Invalid Node ID length");
-        
-        require(idBytes != 0, "Invalid Node ID");
-        
+        require(bytes(nodeID).length == 40, ERR_INVALID_NODEID_LENGTH);
+        require(idBytes != 0, ERR_INVALID_NODEID);
         _;
-
     }
 
+    // Check the address has less than 5 nodes registered
     modifier hasLessThanFiveNodes() {
 
-        require(nodeCount[msg.sender] < 5, "Owner already has 5 registered nodes");
-
+        require(nodeCount[msg.sender] < 5, ERR_NODE_NUMBER);
         _;
+    }
 
+    // Check the address is whitelisted
+    modifier isWhitelisted(){
+        require(priceSubmitterContract.voterWhitelistBitmap(msg.sender) > 0, ERR_NOT_WHITELISTED);
+        _;
+    }
+
+    // Check address is registered
+    modifier notRegistered(){
+        require(providerID[msg.sender] > 0,ERR_ADDRESS_REGISTERED);
+        _;
+    }
+
+    // Check address is not registered
+    modifier isRegistered(){
+        require(providerID[msg.sender] == 0,ERR_ADDRESS_NOT_REGISTERED);
+        _;
     }
 
     function stringToBytes20(string memory source) internal pure returns (bytes20 result) {
@@ -88,89 +107,58 @@ contract ValidatorRegistry {
 
     }
 
-
-    function isNodeIDUsed(string memory nodeID) internal view returns (bool) {
-            
-        for (uint i = 0; i < nodes.length; i++) {
-                   
-             if (keccak256(bytes(nodes[i].nodeID)) == keccak256(bytes(nodeID))) {
-                        
-                return true;
-                    
-            }
-
-        }
-            
-        return false;
-
-    }
-
-    //Store whitelisted providers on mapping
-    function getWhitelistedAddresses(uint _ftsoIndex) internal {
-        address[] memory _whitelistedProviders = voterWhitelisterContract.getFtsoWhitelistedPriceProviders(_ftsoIndex);
-        
-        for (uint256 i = 0; i < _whitelistedProviders.length; i++) {
-            whitelistedProviders[_whitelistedProviders[i]] = true;
-        }
-    }
-
-    function registerNode(string memory nodeID) external isValidNodeID(nodeID) hasLessThanFiveNodes {
-         getWhitelistedAddresses(1);
-
-        // ensure msg.sender is whitelisted for the specified FTSO index
-        require(whitelistedProviders[msg.sender], "Sender is not whitelisted for the specified FTSO index");
+    // First Time register for info
+    function registerProviderInformation(string memory _name,string memory _url, string memory _logo) external isWhitelisted notRegistered {
 
         // checks passed, register node
-        Node memory newNode = Node(msg.sender, nodeID);
-        nodes.push(newNode);
-        nodeCount[msg.sender]++;
-        
-        emit NodeRegistered(msg.sender, nodeID);
-        
+        Provider memory newProvider = Provider(msg.sender, _name, _url, _logo);
+        providers.push(newProvider);
+        providerID[msg.sender] = providers.length;
+
+        emit ProviderRegistered(msg.sender, _name, _url, _logo);
+    }
+    
+    // Checks the provider is registered and then swaps last index with providers and deletes it
+    function deleteProviderInformation() external isRegistered{
+
+        uint indexToDelete = providerID[msg.sender] - 1;
+        uint lastIndex = providers.length - 1;
+
+        if (indexToDelete != lastIndex) {
+            providers[indexToDelete] = providers[lastIndex];
+        }
+        providers.pop();
+        providerID[msg.sender] = 0;
+
+        emit ProviderDeleted(msg.sender);
     }
 
-    function deleteNode(string memory nodeID) external { //skip nodeid validation due to unique check, only check if msg.sender is owner
+    // Register nodeID to address and increase the node count
+    function nodeIDRegister(string memory _nodeID) external isValidNodeID(_nodeID) hasLessThanFiveNodes isWhitelisted() {
+        nodeidRegistry[msg.sender][nodeCount[msg.sender]++] = _nodeID;
+
+        emit NodeRegistered(msg.sender, _nodeID);
+    }
+
+    // Delete the NodeID and reduce Count
+    function deleteNodeID(string memory nodeID) external {
         
-        for (uint i = 0; i < nodes.length; i++) {
+        for (uint i = 0; i < nodeCount[msg.sender]; i++) {
           
-            if (keccak256(bytes(nodes[i].nodeID)) == keccak256(bytes(nodeID)) && nodes[i].owner == msg.sender) {
-          
+            if (keccak256(bytes(nodeidRegistry[msg.sender][i])) == keccak256(bytes(nodeID))) {
+                delete nodeidRegistry[msg.sender][i];
+                nodeCount[msg.sender]--;
+
                 emit NodeDeleted(msg.sender, nodeID);
-          
-                nodes[i] = nodes[nodes.length - 1];
-          
-                nodes.pop(); //now a dynamic array so need to pop it
-          
                 return;
             }
-
         }
-
         revert("Node not found for the owner");
     }
 
-
-    function getAllOwnersAndNodes() external view returns (address[] memory owners, string[] memory nodeIDs) {
-        
-        owners = new address[](nodes.length);
-        
-        nodeIDs = new string[](nodes.length);
-
-        for (uint i = 0; i < nodes.length; i++) {
-            
-            owners[i] = nodes[i].owner;
-            
-            nodeIDs[i] = nodes[i].nodeID;
-        
-        }
-
-        return (owners, nodeIDs);
-
-    }
-
-    //Change owner
+    // Change owner
     function transferOwnership(address _newOwner) external onlyOwner {
         owner = _newOwner;
     }
-
+    
 }
