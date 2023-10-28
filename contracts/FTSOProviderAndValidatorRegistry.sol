@@ -11,6 +11,18 @@ contract FTSOProviderAndValidatorRegistry {
     //Contracts
     IPriceSubmitter private priceSubmitterContract;
 
+    //Mappings
+    mapping(address => uint) public nodeCount;
+    mapping(address => mapping(uint => string)) public nodeidRegistry;
+    mapping(address => uint) public providerID;
+
+    Provider[] private providers;
+
+    constructor(address _priceSubmitterAddress) {
+        priceSubmitterContract = IPriceSubmitter(_priceSubmitterAddress);
+        owner = msg.sender;
+    }
+
     //Errors
     string private constant ERR_ONLY_OWNER = "Only Owner can call this function";
     string private constant ERR_NODE_NUMBER = "Provider already has 5 registered nodes, delete a nodeID";
@@ -20,18 +32,13 @@ contract FTSOProviderAndValidatorRegistry {
     string private constant ERR_ADDRESS_REGISTERED = "Address already registered, delete before registering";
     string private constant ERR_ADDRESS_NOT_REGISTERED = "Address not registered";
     
-    constructor(address _priceSubmitterAddress) {
-        priceSubmitterContract = IPriceSubmitter(_priceSubmitterAddress);
-        owner = msg.sender;
-    }
+    //Events
+    event ProviderRegistered(address indexed owner, string name, string url, string logo);
+    event ProviderDeleted(address indexed owner);
+    event NodeRegistered(address indexed owner, string nodeID);
+    event NodeDeleted(address indexed owner, string nodeID);
 
-    //TODO: hook up to ftsowhitelist
-    mapping(address => uint) public nodeCount;
-    mapping(address => mapping(uint => string)) public nodeidRegistry;
-    mapping(address => uint) public providerID;
-
-    Provider[] private providers;
-
+    //Structures
     struct Provider {
         address owner;
         string Name;
@@ -39,13 +46,8 @@ contract FTSOProviderAndValidatorRegistry {
         string ipfshash;
     }
 
-    //Events
-    event ProviderRegistered(address indexed owner, string name, string url, string logo);
-    event ProviderDeleted(address indexed owner);
-    event NodeRegistered(address indexed owner, string nodeID);
-    event NodeDeleted(address indexed owner, string nodeID);
-
     //Modifiers
+
     // Check that only owner can call
     modifier onlyOwner() {
         require(msg.sender == owner, ERR_ONLY_OWNER);
