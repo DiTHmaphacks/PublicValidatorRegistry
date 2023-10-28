@@ -1,5 +1,18 @@
 // SPDX-License-Identifier: MIT
 
+/*--------------------------------------------
+
+  todo's / ideas
+
+  1.) json format
+  2.) look at structure from solidifi or fb
+  3.) ipfs
+  4.) checks / deletes on modvote storage
+  5.) proxy / upgradeable
+
+
+----------------------------------------------*/
+
 pragma solidity ^0.8.0;
 
 interface WhitelistVoter {
