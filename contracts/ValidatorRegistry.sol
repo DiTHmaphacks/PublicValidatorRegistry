@@ -133,11 +133,10 @@ contract ValidatorRegistry is WhitelistVoter {
     }
 
 
-    function registerNode(string memory nodeID) external isValidNodeID(nodeID) hasLessThanFiveNodes {
+    function registerNode(string memory nodeID, uint256 ftsoWhitelistIndex) external isValidNodeID(nodeID) hasLessThanFiveNodes {
          
-        address[] memory whitelistedProviders = whitelistVoter.getFtsoWhitelistedPriceProviders(1);
+        address[] memory whitelistedProviders = whitelistVoter.getFtsoWhitelistedPriceProviders(ftsoWhitelistIndex); //user defined index instead of hardcode
 
-        // check if msg.sender is in the whitelisted providers array for sample ftsoindex of 1.. will want to update to btc 
         bool senderIsWhitelisted = false;
         
         for (uint256 i = 0; i < whitelistedProviders.length; i++) {
