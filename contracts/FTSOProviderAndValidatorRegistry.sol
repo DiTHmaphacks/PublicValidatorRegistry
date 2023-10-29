@@ -213,21 +213,20 @@ contract FTSOProviderAndValidatorRegistry {
 
     // Return 2 arrays addresses and their corresponding information in json format
     function getAllDataJson() external view returns (address[] memory, string[] memory) {
+
         address[] memory _addresses = new address[](providers.length);
         string[] memory _information = new string[](providers.length);
         
         for (uint i = 0; i < providers.length; i++) {
+
             Provider storage provider = providers[i];
             _addresses[i] = provider.owner;
-
             string[] memory _nodeIDs = new string[](nodeCount[provider.owner]);
-
             for(uint j = 0; j < nodeCount[provider.owner]; j++){
                 _nodeIDs[j] = nodeidRegistry[provider.owner][j];
             }
 
             string memory nodeIDs = stringifyArray(_nodeIDs);
-
             string memory jsonString = string(abi.encodePacked(
                 '{"name":"', 
                 provider.Name, 
@@ -239,7 +238,6 @@ contract FTSOProviderAndValidatorRegistry {
                 nodeIDs, 
                 "}"
             ));
-
             _information[i] = jsonString;
         }
 
@@ -248,6 +246,7 @@ contract FTSOProviderAndValidatorRegistry {
 
     // Change an array into a string
     function stringifyArray(string[] memory array) internal pure returns (string memory) {
+
         string memory result = '["';
         for (uint i = 0; i < array.length; i++) {
             result = string(abi.encodePacked(result, array[i]));
@@ -256,6 +255,7 @@ contract FTSOProviderAndValidatorRegistry {
             }
         }
         result = string(abi.encodePacked(result, '"]'));
+
         return result;
     }
 
