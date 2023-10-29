@@ -123,7 +123,7 @@ contract FTSOProviderAndValidatorRegistry {
     }
 
     // First Time register for provider information
-    function registerProviderInformation(string calldata _name,string calldata _url, string calldata _logoipfshash) external  nameIsUnder20chars(_name){
+    function registerProviderInformation(string calldata _name,string calldata _url, string calldata _logoipfshash) external  isWhitelisted notRegistered nameIsUnder20chars(_name){
 
         Provider memory newProvider = Provider(msg.sender, _name, _url, _logoipfshash);
         providers.push(newProvider);
