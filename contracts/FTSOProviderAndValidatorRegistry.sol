@@ -12,9 +12,9 @@ contract FTSOProviderAndValidatorRegistry {
     IPriceSubmitter private priceSubmitterContract;
 
     //Mappings
-    mapping(address => uint) public nodeCount;
-    mapping(address => mapping(uint => string)) public nodeidRegistry;
-    mapping(address => uint) public providerID;
+    mapping(address => uint) private nodeCount;
+    mapping(address => mapping(uint => string)) private nodeidRegistry;
+    mapping(address => uint) private providerID;
 
     Provider[] private providers;
 
@@ -26,29 +26,33 @@ contract FTSOProviderAndValidatorRegistry {
     //Errors
     string private constant ERR_ONLY_OWNER = "Only Owner can call this function";
     string private constant ERR_FIVE_NODE_NUMBER = "Provider already has 5 registered nodes, delete a nodeID";
+    string private constant ERR_NODE_REGISTERED = "Provider has a node registered, delete nodes to continue";
     string private constant ERR_ZERO_NODE_NUMBER = "Provider doesnt have a node registered";
     string private constant ERR_NOT_WHITELISTED = "Address not Whitelisted";
     string private constant ERR_INVALID_NODEID = "Invalid Node ID";
     string private constant ERR_INVALID_NODEID_LENGTH = "Invalid Node ID length, make sure to submit with NodeID- prefix";
-    string private constant ERR_ADDRESS_REGISTERED = "Address already registered, delete before registering";
+    string private constant ERR_ADDRESS_REGISTERED = "Address already registered, use modify or delete before trying again";
     string private constant ERR_ADDRESS_NOT_REGISTERED = "Address not registered, register a provider first";
+    string private constant ERR_NAME_LENGTH = "Name length is restricted it up to 20 characters";
     
     //Events
     event ProviderRegistered(address indexed owner, string name, string url, string logo);
     event ProviderDeleted(address indexed owner);
+    event ProviderModified(address indexed owner, string name, string url, string logo);
     event NodeRegistered(address indexed owner, string nodeID);
     event NodeDeleted(address indexed owner, string nodeID);
+    event AllNodesDeleted(address indexed owner);
 
     //Structures
+    // Name restricted to 20chars, logoipfshash needs to be the ipfs hash of the logo :)
     struct Provider {
         address owner;
         string Name;
         string url;
-        string logo;
+        string logoipfshash;
     }
 
     //Modifiers
-
     // Check that only owner can call
     modifier onlyOwner() {
         require(msg.sender == owner, ERR_ONLY_OWNER);
@@ -68,11 +72,19 @@ contract FTSOProviderAndValidatorRegistry {
         require(nodeCount[msg.sender] < 5, ERR_FIVE_NODE_NUMBER);
         _;
     }
+
     // Check the address has at least 1 node registered
-    modifier hasNodeRegistered(){
-        require(nodeCount[msg.sender] > 0, ERR_ZERO_NODE_NUMBER);
+    modifier hasNodeRegistered(address _providerAddress){
+        require(nodeCount[_providerAddress] > 0, ERR_ZERO_NODE_NUMBER);
         _;
     }
+
+    // Check the address has at least 1 node registered
+    modifier doesNotHaveNodeRegistered(){
+        require(nodeCount[msg.sender] == 0, ERR_NODE_REGISTERED);
+        _;
+    }
+
     // Check the address is whitelisted
     modifier isWhitelisted(){
         require(priceSubmitterContract.voterWhitelistBitmap(msg.sender) > 0, ERR_NOT_WHITELISTED);
@@ -80,8 +92,8 @@ contract FTSOProviderAndValidatorRegistry {
     }
 
     // Check address is registered
-    modifier isRegistered(){
-        require(providerID[msg.sender] > 0, ERR_ADDRESS_NOT_REGISTERED);
+    modifier isRegistered(address _providerAddress){
+        require(providerID[_providerAddress] > 0, ERR_ADDRESS_NOT_REGISTERED);
         _;
     }
 
@@ -91,8 +103,15 @@ contract FTSOProviderAndValidatorRegistry {
         _;
     }
 
+    // Check name is below 20 characters
+    modifier nameIsUnder20chars(string calldata _name) {
+        require(bytes(_name).length <= 20, ERR_NAME_LENGTH);
+        _;
+    }
+
+    // Functions
     function stringToBytes20(string memory source) internal pure returns (bytes20 result) {
-        //lightftso avax reference: https://docs.avax.network/reference/standards/cryptographic-primitives#tls-addresses
+
         bytes memory tempEmptyStringTest = bytes(source); 
         if (tempEmptyStringTest.length == 0) {
             return 0x0;
@@ -103,19 +122,29 @@ contract FTSOProviderAndValidatorRegistry {
         }
     }
 
-    // First Time register for info
-    function registerProviderInformation(string calldata _name,string calldata _url, string calldata _logo) external  isWhitelisted notRegistered {
+    // First Time register for provider information
+    function registerProviderInformation(string calldata _name,string calldata _url, string calldata _logoipfshash) external  nameIsUnder20chars(_name){
 
-        // checks passed, register node
-        Provider memory newProvider = Provider(msg.sender, _name, _url, _logo);
+        Provider memory newProvider = Provider(msg.sender, _name, _url, _logoipfshash);
         providers.push(newProvider);
         providerID[msg.sender] = providers.length;
 
-        emit ProviderRegistered(msg.sender, _name, _url, _logo);
+        emit ProviderRegistered(msg.sender, _name, _url, _logoipfshash);
     }
     
+    // Modify existing provider information
+    function modifyProviderInformation(string calldata _name,string calldata _url, string calldata _logoipfshash) external  isRegistered(msg.sender) nameIsUnder20chars(_name){
+
+        Provider storage provider = providers[providerID[msg.sender] - 1];
+        provider.Name = _name;
+        provider.url = _url;
+        provider.logoipfshash = _logoipfshash;
+
+        emit ProviderModified(msg.sender, _name, _url, _logoipfshash);
+    }
+
     // Checks the provider is registered and then swaps last index with providers and deletes it
-    function deleteProviderInformation() external isRegistered{
+    function deleteProviderInformation() external isRegistered(msg.sender) doesNotHaveNodeRegistered{
 
         uint indexToDelete = providerID[msg.sender] - 1;
         uint lastIndex = providers.length - 1;
@@ -130,17 +159,17 @@ contract FTSOProviderAndValidatorRegistry {
     }
 
     // Register nodeID to address and increase the node count
-    function nodeIDRegister(string calldata _nodeID) external isWhitelisted isRegistered hasLessThanFiveNodes isValidNodeID(_nodeID) {
+    function nodeIDRegister(string calldata _nodeID) external isRegistered(msg.sender) hasLessThanFiveNodes isValidNodeID(_nodeID) {
+
         nodeidRegistry[msg.sender][nodeCount[msg.sender]++] = _nodeID;
 
         emit NodeRegistered(msg.sender, _nodeID);
     }
 
     // Delete the NodeID and reduce Count
-    function deleteNodeID(string calldata _nodeID) external hasNodeRegistered isValidNodeID(_nodeID) {
+    function deleteNodeID(string calldata _nodeID) external hasNodeRegistered(msg.sender) isValidNodeID(_nodeID) {
         
         for (uint i = 0; i < nodeCount[msg.sender]; i++) {
-          
             if (keccak256(bytes(nodeidRegistry[msg.sender][i])) == keccak256(bytes(_nodeID))) {
                 delete nodeidRegistry[msg.sender][i];
                 nodeCount[msg.sender]--;
@@ -150,6 +179,36 @@ contract FTSOProviderAndValidatorRegistry {
             }
         }
         revert("Node not found for the owner");
+    }
+
+    // Delete all NodeIDs and reset count
+    function deleteAllNodeIDs() external hasNodeRegistered(msg.sender){
+        for (uint i = 0; i < nodeCount[msg.sender]; i++){
+            delete nodeidRegistry[msg.sender][i];
+        }
+        delete nodeCount[msg.sender];
+
+        emit AllNodesDeleted(msg.sender);
+    }
+
+    // Return provider information for the address
+    function getProviderInformation(address _providerAddress) external view isRegistered(_providerAddress) returns(string memory, string memory, string memory) {
+
+        Provider storage provider = providers[providerID[_providerAddress] - 1];
+
+        return (provider.Name,provider.url,provider.logoipfshash);
+    }
+    
+    // Return all nodeIDS of address
+    function getNodeIDs(address _providerAddress) external view hasNodeRegistered(_providerAddress) returns(string[] memory){
+
+        string[] memory _nodeIDs = new string[](nodeCount[_providerAddress]);
+
+        for (uint i = 0; i < nodeCount[_providerAddress]; i++){
+            _nodeIDs[i] = nodeidRegistry[_providerAddress][i];
+        }
+
+        return _nodeIDs;
     }
 
     // Change owner
