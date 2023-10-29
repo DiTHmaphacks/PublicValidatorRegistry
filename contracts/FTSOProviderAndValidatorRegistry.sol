@@ -211,6 +211,54 @@ contract FTSOProviderAndValidatorRegistry {
         return _nodeIDs;
     }
 
+    // Return 2 arrays addresses and their corresponding information in json format
+    function getAllDataJson() external view returns (address[] memory, string[] memory) {
+        address[] memory _addresses = new address[](providers.length);
+        string[] memory _information = new string[](providers.length);
+        
+        for (uint i = 0; i < providers.length; i++) {
+            Provider storage provider = providers[i];
+            _addresses[i] = provider.owner;
+
+            string[] memory _nodeIDs = new string[](nodeCount[provider.owner]);
+
+            for(uint j = 0; j < nodeCount[provider.owner]; j++){
+                _nodeIDs[j] = nodeidRegistry[provider.owner][j];
+            }
+
+            string memory nodeIDs = stringifyArray(_nodeIDs);
+
+            string memory jsonString = string(abi.encodePacked(
+                '{"name":"', 
+                provider.Name, 
+                '","url":"', 
+                provider.url, 
+                '","logo":"', 
+                provider.logoipfshash, 
+                '","nodeID":', 
+                nodeIDs, 
+                "}"
+            ));
+
+            _information[i] = jsonString;
+        }
+
+        return (_addresses, _information);
+    }
+
+    // Change an array into a string
+    function stringifyArray(string[] memory array) internal pure returns (string memory) {
+        string memory result = '["';
+        for (uint i = 0; i < array.length; i++) {
+            result = string(abi.encodePacked(result, array[i]));
+            if (i < array.length - 1) {
+                result = string(abi.encodePacked(result, '","'));
+            }
+        }
+        result = string(abi.encodePacked(result, '"]'));
+        return result;
+    }
+
     // Change owner
     function transferOwnership(address _newOwner) external onlyOwner {
         owner = _newOwner;
