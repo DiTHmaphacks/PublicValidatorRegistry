@@ -74,9 +74,9 @@ contract FTSOandValidatorRegistry {
     }
 
     //Delete provider information
-    function deleteProviderInformation() isWhitelisted external{
+    function deleteProviderInformation() external{
 
-        require( providerRegistered[msg.sender],ERR_PROVIDER_NOT_REGISTERED);
+        require(providerRegistered[msg.sender],ERR_PROVIDER_NOT_REGISTERED);
 
         uint256 providerToDelete = providerID[msg.sender];
         uint256 lastIndex = totalProvidersRegistered;
