@@ -20,7 +20,7 @@ contract FTSOandValidatorRegistry {
     string private constant ERR_PROVIDER_NOT_REGISTERED = "Address not registered, user registerProviderInformation function to register";
     string private constant ERR_JSON_ZERO_LENGTH = "Requires input to not be empty";
 
-     //Mappings
+    //Mappings
     mapping(address => uint) public providerID;
     mapping(uint => address) public idProvider;
     mapping(address => bool) public providerRegistered;
@@ -29,12 +29,13 @@ contract FTSOandValidatorRegistry {
     mapping(address => mapping(address => bool)) private votes;
     mapping(address => uint256) private totalVotes;
 
-    constructo(address _priceSubmitterAddress) {
+    constructor(address _priceSubmitterAddress) {
         priceSubmitterContract = IPriceSubmitter(_priceSubmitterAddress);
         owner = msg.sender;
         totalModerators = 0;
     }
-     //Modifiers
+
+    //Modifiers
     modifier onlyOwner() {
         require(msg.sender == owner, ERR_ONLY_OWNER);
         _;
