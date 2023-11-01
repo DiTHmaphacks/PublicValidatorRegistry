@@ -6,9 +6,10 @@ import "./IPriceSubmitter.sol";
 contract FTSOandValidatorRegistry {
 
     address public owner;
-    uint256 private totalModerators;
-    string[] public providerInformation;
+    string[] private providerInformation;
     uint256 public totalProvidersRegistered;
+    uint256 public totalModerators;
+    uint256 public voteThreshold;
 
     //Contracts
     IPriceSubmitter private priceSubmitterContract;
@@ -19,15 +20,22 @@ contract FTSOandValidatorRegistry {
     string private constant ERR_ADDRESS_NOT_WHITELISTED = "Address not whitelisted";
     string private constant ERR_PROVIDER_NOT_REGISTERED = "Address not registered, user registerProviderInformation function to register";
     string private constant ERR_JSON_ZERO_LENGTH = "Requires input to not be empty";
+    string private constant ERR_ADDRESS_BLACKLISTED = "Address is blacklisted";
+    string private constant ERR_ALLREADY_VOTED = "Moderator has already voted for this address";
+    string private constant ERR_SAME_VOTE = "Moderator has already voted the same for this address";
+    string private constant ERR_SAME_MODERATOR_STATUS = "Moderator has the same status owner is trying to set";
+    string private constant ERR_INVALID_PROVIDER_ID = "Invalid Provider ID";
 
     //Mappings
-    mapping(address => uint) public providerID;
-    mapping(uint => address) public idProvider;
-    mapping(address => bool) public providerRegistered;
-    mapping(address => bool) private moderators;
-    mapping(address => bool) private blacklist;
-    mapping(address => mapping(address => bool)) private votes;
-    mapping(address => uint256) private totalVotes;
+    mapping(address => uint) private providerID;
+    mapping(uint => address) private idProvider;
+    mapping(address => bool) private providerRegistered;
+    mapping(address => bool) public moderators;
+    mapping(address => bool) public blacklist;
+    mapping(address => mapping(address => bool)) public blacklistModeratorVotes;
+    mapping(address => mapping(address => bool)) public informationModeratorVotes;
+    mapping(address => uint) public numberBlacklistModeratorVotes;
+    mapping(address => uint) public numberInformationModeratorVotes;
 
     constructor(address _priceSubmitterAddress) {
         priceSubmitterContract = IPriceSubmitter(_priceSubmitterAddress);
@@ -51,16 +59,30 @@ contract FTSOandValidatorRegistry {
         _;
     }
 
+    modifier notBlacklisted(){
+        require(!blacklist[msg.sender],ERR_ADDRESS_BLACKLISTED);
+        _;
+    }
+
+    modifier differentVote(address _blacklistAddress,bool _vote){
+        require (blacklistModeratorVotes[msg.sender][_blacklistAddress] != _vote, ERR_SAME_VOTE);
+        _;
+    }
+
     //Events
     event ProviderRegistered(address indexed owner);
     event ProviderDeleted(address indexed owner);
+    event BlacklistedStatusChanged(address indexed blacklistedAddress,bool status);
+    event ProviderInformationModerated(address indexed providerAddress);
+    event ModeratorStatusChanged(address indexed moderator,bool status);
 
     // Functions
     // Register provider information. String input needs to be a json formatted string
     // with fields address, name , NodeID , url , logourl
-    function registerProviderInformation(string calldata _jsonProviderInformation) isWhitelisted external{
+    function registerProviderInformation(string calldata _jsonProviderInformation) isWhitelisted notBlacklisted external{
 
         if (providerRegistered[msg.sender]){
+            require(providerID[msg.sender] > 0 && providerID[msg.sender] <= providerInformation.length, ERR_INVALID_PROVIDER_ID);
             providerInformation[providerID[msg.sender]] = _jsonProviderInformation;
         }
         else{
@@ -74,7 +96,7 @@ contract FTSOandValidatorRegistry {
     }
 
     //Delete provider information
-    function deleteProviderInformation() external{
+    function deleteProviderInformation() isWhitelisted notBlacklisted external{
 
         require(providerRegistered[msg.sender],ERR_PROVIDER_NOT_REGISTERED);
 
@@ -100,4 +122,77 @@ contract FTSOandValidatorRegistry {
         return providerInformation;
     }
 
+    // Blacklist address when votes pass 50% of total votes threshold, moderators can recall the function to change their vote
+    function blacklistAddress(address _blacklistAddress, bool _vote) external onlyModerator differentVote(_blacklistAddress,_vote){
+        
+        blacklistModeratorVotes[msg.sender][_blacklistAddress] = _vote;
+        if (_vote){
+            ++numberBlacklistModeratorVotes[_blacklistAddress];
+            if (numberBlacklistModeratorVotes[_blacklistAddress] > voteThreshold) {
+            blacklist[_blacklistAddress] = true;
+        }
+        }
+        else{
+            assert(numberBlacklistModeratorVotes[_blacklistAddress] > 0);
+            --numberBlacklistModeratorVotes[_blacklistAddress];
+            if (numberBlacklistModeratorVotes[_blacklistAddress] <= voteThreshold) {
+            blacklist[_blacklistAddress] = false;
+            }
+        }
+
+        emit BlacklistedStatusChanged(_blacklistAddress,blacklist[_blacklistAddress]);
+    }
+
+    // Delete provider information when votes pass 50% of total votes threshold, moderators can recall the function to change their vote
+    function moderatorDeleteProviderInformation(address _addressToDelete, bool _vote) external onlyModerator differentVote(_addressToDelete,_vote){
+        
+        require(providerRegistered[_addressToDelete],ERR_PROVIDER_NOT_REGISTERED);
+        informationModeratorVotes[msg.sender][_addressToDelete] = _vote;
+        if(_vote){
+            ++numberInformationModeratorVotes[_addressToDelete];
+            if (numberInformationModeratorVotes[_addressToDelete] > voteThreshold){
+
+                uint256 providerToDelete = providerID[_addressToDelete];
+                uint256 lastIndex = totalProvidersRegistered;
+
+                providerInformation[providerToDelete- 1] = providerInformation[lastIndex - 1];
+                providerID[idProvider[lastIndex]] = providerID[_addressToDelete];
+                idProvider[providerID[_addressToDelete]] = idProvider[lastIndex];
+
+                providerInformation.pop();        
+                delete idProvider[lastIndex];
+                delete providerID[_addressToDelete];
+                delete providerRegistered[_addressToDelete];
+                totalProvidersRegistered--;
+            }
+        }
+        else{
+            assert(numberInformationModeratorVotes[_addressToDelete] > 0);
+            --numberInformationModeratorVotes[_addressToDelete];
+        }
+
+        emit ProviderInformationModerated(_addressToDelete);
+    }
+
+    // Add moderators, only owner can add moderators
+    function changeModeratorStatus(address _moderator, bool _status) external onlyOwner{
+        
+        require(moderators[_moderator] != _status, ERR_SAME_MODERATOR_STATUS);
+        moderators[_moderator] = _status;
+        if (_status){
+            ++totalModerators;
+        }
+        else{
+            assert(totalModerators > 0);
+            --totalModerators;
+        }
+        voteThreshold = totalModerators / 2;
+
+        emit ModeratorStatusChanged(_moderator,_status);
+    }
+
+    // Change owner
+    function transferOwnership(address _newOwner) external onlyOwner {
+        owner = _newOwner;
+    }
 }
