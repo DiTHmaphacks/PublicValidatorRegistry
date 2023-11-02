@@ -10,6 +10,7 @@ contract FTSOandValidatorRegistry {
     uint256 public totalProvidersRegistered;
     uint256 public totalModerators;
     uint256 public voteThreshold;
+    uint256 public stringLengthCap;
 
     //Contracts
     IPriceSubmitter private priceSubmitterContract;
@@ -20,6 +21,7 @@ contract FTSOandValidatorRegistry {
     string private constant ERR_ADDRESS_NOT_WHITELISTED = "Address not whitelisted";
     string private constant ERR_PROVIDER_NOT_REGISTERED = "Address not registered, user registerProviderInformation function to register";
     string private constant ERR_JSON_ZERO_LENGTH = "Requires input to not be empty";
+    string private constant ERR_JSON_INPUT_TOO_LONG = "Input string too long";
     string private constant ERR_ADDRESS_BLACKLISTED = "Address is blacklisted";
     string private constant ERR_ALLREADY_VOTED = "Moderator has already voted for this address";
     string private constant ERR_SAME_VOTE = "Moderator has already voted the same for this address";
@@ -41,6 +43,7 @@ contract FTSOandValidatorRegistry {
         priceSubmitterContract = IPriceSubmitter(_priceSubmitterAddress);
         owner = msg.sender;
         totalModerators = 0;
+        stringLengthCap = 255;
     }
 
     //Modifiers
@@ -75,12 +78,15 @@ contract FTSOandValidatorRegistry {
     event BlacklistedStatusChanged(address indexed blacklistedAddress,bool status);
     event ProviderInformationModerated(address indexed providerAddress);
     event ModeratorStatusChanged(address indexed moderator,bool status);
+    event OwnershipChanged(address indexed owner);
+    event StringLengthChanged(uint stringLength);
 
     // Functions
     // Register provider information. String input needs to be a json formatted string
     // with fields address, name , NodeID , url , logourl
     function registerProviderInformation(string calldata _jsonProviderInformation) isWhitelisted notBlacklisted external{
 
+        require(bytes(_jsonProviderInformation).length < stringLengthCap, ERR_JSON_INPUT_TOO_LONG);
         if (providerRegistered[msg.sender]){
             require(providerID[msg.sender] > 0 && providerID[msg.sender] <= providerInformation.length, ERR_INVALID_PROVIDER_ID);
             providerInformation[providerID[msg.sender]] = _jsonProviderInformation;
@@ -193,6 +199,17 @@ contract FTSOandValidatorRegistry {
 
     // Change owner
     function transferOwnership(address _newOwner) external onlyOwner {
+        
         owner = _newOwner;
+
+        emit OwnershipChanged(_newOwner);
+    }
+
+    // Change string length cap in case of further fields added
+    function changeStringLengthCap(uint _newLength) external onlyOwner{
+        
+        stringLengthCap = _newLength;
+
+        emit StringLengthChanged(_newLength);
     }
 }
