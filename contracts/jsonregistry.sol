@@ -29,8 +29,8 @@ contract FTSOandValidatorRegistry {
     string private constant ERR_INVALID_PROVIDER_ID = "Invalid Provider ID";
 
     //Mappings
-    mapping(address => uint) private providerID;
-    mapping(uint => address) private idProvider;
+    mapping(address => uint) public providerID;
+    mapping(uint => address) public idProvider;
     mapping(address => bool) private providerRegistered;
     mapping(address => bool) public moderators;
     mapping(address => bool) public blacklist;
@@ -88,12 +88,12 @@ contract FTSOandValidatorRegistry {
 
         require(bytes(_jsonProviderInformation).length < stringLengthCap, ERR_JSON_INPUT_TOO_LONG);
         if (providerRegistered[msg.sender]){
-            require(providerID[msg.sender] > 0 && providerID[msg.sender] <= providerInformation.length, ERR_INVALID_PROVIDER_ID);
+            require(providerID[msg.sender] >= 0 && providerID[msg.sender] <= providerInformation.length, ERR_INVALID_PROVIDER_ID);
             providerInformation[providerID[msg.sender]] = _jsonProviderInformation;
         }
         else{
             providerRegistered[msg.sender] = true;
-            providerID[msg.sender] = ++totalProvidersRegistered;
+            providerID[msg.sender] = totalProvidersRegistered++;
             idProvider[providerID[msg.sender]] = msg.sender;
             providerInformation.push(_jsonProviderInformation);
         }
