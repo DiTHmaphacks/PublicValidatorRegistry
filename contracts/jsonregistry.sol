@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >= 0.7.0 <0.9.0;
+pragma solidity >= 0.7.0 < 0.9.0;
 
 import "./IPriceSubmitter.sol";
 
@@ -58,7 +58,7 @@ contract FTSOandValidatorRegistry {
     }
 
     modifier isWhitelisted(){
-        require(priceSubmitterContract.voterWhitelistBitmap(msg.sender) > 0,ERR_ADDRESS_NOT_WHITELISTED);
+        require(priceSubmitterContract.voterWhitelistBitmap(msg.sender) > 0, ERR_ADDRESS_NOT_WHITELISTED);
         _;
     }
 
@@ -192,7 +192,7 @@ contract FTSOandValidatorRegistry {
             assert(totalModerators > 0);
             --totalModerators;
         }
-        voteThreshold = totalModerators / 2;
+        voteThreshold = totalModerators / 2 + 1;
 
         emit ModeratorStatusChanged(_moderator,_status);
     }
