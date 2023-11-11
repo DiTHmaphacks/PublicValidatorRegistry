@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >= 0.7.0 < 0.9.0;
+pragma solidity >= 0.7.0 < 0.8.11;
 
-import "./IPriceSubmitter.sol";
+import "../ftso/userInterfaces/IPriceSubmitter.sol";
 
-contract FTSOandValidatorRegistry {
+contract ftso2ValidatorRegistry {
 
     address public owner;
     string[] private providerInformation;
-    uint256 public totalProvidersRegistered;
-    uint256 public totalModerators;
-    uint256 public voteThreshold;
+    uint256 private totalProvidersRegistered;
+    uint256 private totalModerators;
+    uint256 private voteThreshold;
     uint256 public stringLengthCap;
 
     //Contracts
@@ -29,17 +29,17 @@ contract FTSOandValidatorRegistry {
     string private constant ERR_INVALID_PROVIDER_ID = "Invalid Provider ID";
 
     //Mappings
-    mapping(address => uint) public providerID;
-    mapping(uint => address) public idProvider;
+    mapping(address => uint) private providerID;
+    mapping(uint => address) private idProvider;
     mapping(address => bool) private providerRegistered;
-    mapping(address => bool) public moderators;
-    mapping(address => bool) public blacklist;
-    mapping(address => mapping(address => bool)) public blacklistModeratorVotes;
-    mapping(address => mapping(address => bool)) public informationModeratorVotes;
-    mapping(address => uint) public numberBlacklistModeratorVotes;
-    mapping(address => uint) public numberInformationModeratorVotes;
+    mapping(address => bool) private moderators;
+    mapping(address => bool) private blacklist;
+    mapping(address => mapping(address => bool)) private blacklistModeratorVotes;
+    mapping(address => mapping(address => bool)) private informationModeratorVotes;
+    mapping(address => uint) private numberBlacklistModeratorVotes;
+    mapping(address => uint) private numberInformationModeratorVotes;
 
-    constructor(address _priceSubmitterAddress) {
+    constructor(address _priceSubmitterAddress){
         priceSubmitterContract = IPriceSubmitter(_priceSubmitterAddress);
         owner = msg.sender;
         totalModerators = 0;
@@ -196,20 +196,14 @@ contract FTSOandValidatorRegistry {
 
         emit ModeratorStatusChanged(_moderator,_status);
     }
-
     // Change owner
-    function transferOwnership(address _newOwner) external onlyOwner {
-        
+    function transferOwnership(address _newOwner) external onlyOwner{
         owner = _newOwner;
-
         emit OwnershipChanged(_newOwner);
     }
-
     // Change string length cap in case of further fields added
     function changeStringLengthCap(uint _newLength) external onlyOwner{
-        
         stringLengthCap = _newLength;
-
         emit StringLengthChanged(_newLength);
     }
 }
