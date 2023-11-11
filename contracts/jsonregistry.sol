@@ -166,12 +166,14 @@ contract ftso2ValidatorRegistry {
                 uint256 providerToDelete = providerID[_addressToDelete];
                 uint256 lastIndex = totalProvidersRegistered;
 
-                providerInformation[providerToDelete- 1] = providerInformation[lastIndex - 1];
-                providerID[idProvider[lastIndex]] = providerID[_addressToDelete];
-                idProvider[providerID[_addressToDelete]] = idProvider[lastIndex];
+                if (providerToDelete != lastIndex - 1) {
+                    providerInformation[providerToDelete - 1] = providerInformation[lastIndex - 1];
+                    providerID[idProvider[lastIndex - 1]] = providerID[_addressToDelete];
+                    idProvider[providerID[_addressToDelete]] = idProvider[lastIndex - 1];
+                }
 
                 providerInformation.pop();        
-                delete idProvider[lastIndex];
+                delete idProvider[lastIndex - 1];
                 delete providerID[_addressToDelete];
                 delete providerRegistered[_addressToDelete];
                 totalProvidersRegistered--;
