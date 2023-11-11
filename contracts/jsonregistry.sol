@@ -29,8 +29,8 @@ contract ftso2ValidatorRegistry {
     string private constant ERR_INVALID_PROVIDER_ID = "Invalid Provider ID";
 
     //Mappings
-    mapping(address => uint) private providerID;
-    mapping(uint => address) private idProvider;
+    mapping(address => uint) private  providerID;
+    mapping(uint => address) private  idProvider;
     mapping(address => bool) private providerRegistered;
     mapping(address => bool) private moderators;
     mapping(address => bool) private blacklist;
@@ -114,12 +114,14 @@ contract ftso2ValidatorRegistry {
         uint256 providerToDelete = providerID[msg.sender];
         uint256 lastIndex = totalProvidersRegistered;
 
-        providerInformation[providerToDelete- 1] = providerInformation[lastIndex - 1];
-        providerID[idProvider[lastIndex]] = providerID[msg.sender];
-        idProvider[providerID[msg.sender]] = idProvider[lastIndex];
+        if (providerToDelete != lastIndex - 1) {
+            providerInformation[providerToDelete] = providerInformation[lastIndex - 1];
+            providerID[idProvider[lastIndex - 1]] = providerID[msg.sender];
+            idProvider[providerID[msg.sender]] = idProvider[lastIndex - 1];
+        }
 
         providerInformation.pop();        
-        delete idProvider[lastIndex];
+        delete idProvider[lastIndex - 1];
         delete providerID[msg.sender];
         delete providerRegistered[msg.sender];
         totalProvidersRegistered--;
@@ -167,7 +169,7 @@ contract ftso2ValidatorRegistry {
                 uint256 lastIndex = totalProvidersRegistered;
 
                 if (providerToDelete != lastIndex - 1) {
-                    providerInformation[providerToDelete - 1] = providerInformation[lastIndex - 1];
+                    providerInformation[providerToDelete] = providerInformation[lastIndex - 1];
                     providerID[idProvider[lastIndex - 1]] = providerID[_addressToDelete];
                     idProvider[providerID[_addressToDelete]] = idProvider[lastIndex - 1];
                 }
