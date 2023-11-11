@@ -67,11 +67,16 @@ contract ftso2ValidatorRegistry {
         _;
     }
 
-    modifier differentVote(address _blacklistAddress,bool _vote){
+    modifier differentBlacklistVote(address _blacklistAddress,bool _vote){
         require (blacklistModeratorVotes[msg.sender][_blacklistAddress] != _vote, ERR_SAME_VOTE);
         _;
     }
 
+    modifier differentInformationVote(address _addressToDelete,bool _vote){
+        require (informationModeratorVotes[msg.sender][_addressToDelete] != _vote, ERR_SAME_VOTE);
+        _;
+    }
+    
     //Events
     event ProviderRegistered(address indexed owner);
     event ProviderDeleted(address indexed owner);
@@ -129,7 +134,7 @@ contract ftso2ValidatorRegistry {
     }
 
     // Blacklist address when votes pass 50% of total votes threshold, moderators can recall the function to change their vote
-    function blacklistAddress(address _blacklistAddress, bool _vote) external onlyModerator differentVote(_blacklistAddress,_vote){
+    function blacklistAddress(address _blacklistAddress, bool _vote) external onlyModerator differentBlacklistVote(_blacklistAddress,_vote){
         
         blacklistModeratorVotes[msg.sender][_blacklistAddress] = _vote;
         if (_vote){
@@ -150,7 +155,7 @@ contract ftso2ValidatorRegistry {
     }
 
     // Delete provider information when votes pass 50% of total votes threshold, moderators can recall the function to change their vote
-    function moderatorDeleteProviderInformation(address _addressToDelete, bool _vote) external onlyModerator differentVote(_addressToDelete,_vote){
+    function moderatorDeleteProviderInformation(address _addressToDelete, bool _vote) external onlyModerator differentInformationVote(_addressToDelete,_vote){
         
         require(providerRegistered[_addressToDelete],ERR_PROVIDER_NOT_REGISTERED);
         informationModeratorVotes[msg.sender][_addressToDelete] = _vote;
